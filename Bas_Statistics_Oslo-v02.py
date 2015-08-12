@@ -1,6 +1,12 @@
 ### This script retrieves the BAS GUI statistics (MEC and ISC sensor alarms) and
 ###  writes them to a file on the local harddrive with a date/time stamp.
 
+#
+# ToDo: 1] input values like a BAS config file. BASNR, ip-address/hostname
+#       2] Determine if this python script is running on windows or unix
+#       3] write logging to default user directory (win & unix)
+#       4] cmd line output file
+
 """
 @author: nlmbah
 """
@@ -112,12 +118,12 @@ def Time():
 
 def GetStatistics(datafile):
     '''
-    Retrieve Info from save statistics file
+    Retrieve Info from save statistics XML-file
     Import xml data
     '''
     tree = xml.etree.ElementTree.parse(datafile)
     root = tree.getroot()
-    print root
+    logging.info(root)
     Stats = []
     IscSensorError = ''
     MecSensorError = ''
@@ -126,16 +132,13 @@ def GetStatistics(datafile):
     for device in root.iter('Isc'):
 
         DeviceName = device.attrib['Name']
-        print('DeviceName: %s' %(DeviceName))
+        logging.info('DeviceName: %s' %(DeviceName))
         if DeviceName.find('ISC') != -1:
             Iscdict = {}
             Iscdict['Date'] = Date()
             Iscdict['Time'] = Time()
             for item in device.iter('Item'):
                 Iscdict[item.attrib['id']] = item.text
-                #print('item.attrib[\'id\']=\'%s\' ; item.text=\'%s\'' %(item.attrib['id'], item.text) )
-                #if item.attrib['id'] == SensorAlarms:
-                #    IscSensorError = str(item.text)
             Stats.append(Iscdict)
     return Stats
 
@@ -143,7 +146,7 @@ def OGmain():
     '''
     Read ISC and MEC sensor errors from each BAS and write that to a file.
     '''
-    SensorDataCsv = BasePath + str(Date())+'_BAS_SensorErrors.csv'
+    SensorDataCsv = BasePath + Date() + '_BAS_SensorErrors.csv'
     CsvFile = open(SensorDataCsv, 'a+')
 
     logging.info('Getting BAS Statistics')
@@ -166,13 +169,14 @@ def OGmain():
 
     CsvFile.close()
 
+
 def main():
     XML_File = BasePath + 'BAS_Statistics.xml'
     InfoList = GetStatistics(XML_File)
 
     for item in InfoList:
-        print type(item)
-        for key,value in item.iteritems():
+        logging.info(type(item))
+        for key, value in item.iteritems():
             print key, value
 
 
